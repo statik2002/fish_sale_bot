@@ -40,10 +40,10 @@ def get_product(token, product_id):
     }
 
     data = {
-        ':id': product_id
+        'include': 'component_products'
     }
 
-    response = requests.get(f'https://api.moltin.com/v2/products/{product_id}', headers=headers)
+    response = requests.get(f'https://api.moltin.com/catalog/products/{product_id}', headers=headers, params=data)
     response.raise_for_status()
 
     return response.json()

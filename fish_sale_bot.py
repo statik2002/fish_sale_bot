@@ -1,6 +1,9 @@
 import argparse
 import logging
 import os
+from pprint import pprint
+from textwrap import dedent
+
 import redis
 import telegram
 from functools import partial
@@ -44,10 +47,17 @@ def buttons_handler(
         redis_client) -> None:
 
     query = update.callback_query
-    product = get_product(token, query.data)
-    print(product)
+    product = get_product(token, query.data)['data']
+    pprint(product)
 
-    message = "Selected option: {}".format(query.data)
+    message = dedent(f'''\
+            {product["attributes"]["name"]} Kg.
+            {product["meta"]["display_price"]["with_tax"]["formatted"]}
+            {product["attributes"]["description"]}'''
+    )
+
+    context.bot.sendMessage(chat_id=update.callback_query.message.chat.id, text=message)
+    #update.message.reply_text(message)
 
     #print(query)
     return START
