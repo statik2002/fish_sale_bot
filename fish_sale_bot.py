@@ -11,23 +11,21 @@ from telegram.ext import (Updater, CommandHandler,
                           MessageHandler, Filters,
                           CallbackContext, ConversationHandler, CallbackQueryHandler)
 
-from auth import get_all_products, get_access_token
+from auth import get_all_products, get_access_token, get_product
 from error_processing import TelegramLogsHandler
 
 logger = logging.getLogger(__file__)
 
-START, BUTTONS_HANDLER, ATTEMPT = range(3)
+START, BUTTONS_HANDLER, HANDLE_MENU,  = range(3)
 
 
-def start(update: Update, context: CallbackContext, token) -> None:
+def start(update: Update, context: CallbackContext, token, redis_client) -> None:
 
-    products = get_all_products(token)
-    print(products)
-
-    keyboard = [[InlineKeyboardButton("Option 1", callback_data='1'),
-                 InlineKeyboardButton("Option 2", callback_data='2')],
-
-                [InlineKeyboardButton("Option 3", callback_data='3')]]
+    products = get_all_products(token)['data']
+    #print(products)
+    keyboard = []
+    for product in products:
+        keyboard.append([InlineKeyboardButton(product['attributes']['name'], callback_data=product['id'])])
 
     reply_markup = InlineKeyboardMarkup(keyboard)
 
@@ -42,13 +40,17 @@ def start(update: Update, context: CallbackContext, token) -> None:
 def buttons_handler(
         update: Update,
         context: CallbackContext,
+        token,
         redis_client) -> None:
 
     query = update.callback_query
+    product = get_product(token, query.data)
+    print(product)
 
     message = "Selected option: {}".format(query.data)
 
     #print(query)
+    return START
 
 
 def cancel(bot, update):
@@ -95,6 +97,7 @@ def main() -> None:
     )
     partial_buttons_handler = partial(
         buttons_handler,
+        token=elastic_path_token,
         redis_client=redis_client
     )
 
@@ -102,6 +105,11 @@ def main() -> None:
         entry_points=[CommandHandler('start', partial_start_handler)],
         states={
             BUTTONS_HANDLER: [
+                CallbackQueryHandler(
+                    partial_buttons_handler,
+                )
+            ],
+            HANDLE_MENU: [
                 CallbackQueryHandler(
                     partial_buttons_handler,
                 )
