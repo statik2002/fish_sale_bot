@@ -84,10 +84,10 @@ def get_cart_items(token):
 
 def main():
     access_token = get_access_token(client_id)
-    products = get_all_products(access_token)['data']
+    products = get_all_products(access_token)
     #cart = get_cart(access_token)
 
-    pprint(products[0])
+    pprint(products)
 
     #select_product = products[0]
 
@@ -105,8 +105,8 @@ def main():
 
     #new_cart = get_cart_items(access_token)
     #pprint(new_cart)
-    product = get_product(access_token, '07c9b380-a9bd-4faa-9cd6-3248f76f499f')
-    pprint(product)
+    #product = get_product(access_token, '07c9b380-a9bd-4faa-9cd6-3248f76f499f')
+    #pprint(product)
 
 
 if __name__ == '__main__':

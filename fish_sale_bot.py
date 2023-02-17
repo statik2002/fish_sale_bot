@@ -48,7 +48,7 @@ def buttons_handler(
 
     query = update.callback_query
     product = get_product(token, query.data)['data']
-    pprint(product)
+    pprint(get_product(token, query.data))
 
     message = dedent(f'''\
             {product["attributes"]["name"]} Kg.
