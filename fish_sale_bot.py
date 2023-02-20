@@ -67,6 +67,7 @@ def buttons_handler(
     )
 
     keyboard = []
+    keyboard.append([InlineKeyboardButton('1 кг', callback_data=1), InlineKeyboardButton('5 кг', callback_data=5), InlineKeyboardButton('10 кг', callback_data=10)])
     keyboard.append([InlineKeyboardButton('Взад', callback_data=token)])
     reply_markup = InlineKeyboardMarkup(keyboard)
 
