@@ -14,12 +14,13 @@ from telegram.ext import (Updater, CommandHandler,
                           MessageHandler, Filters,
                           CallbackContext, ConversationHandler, CallbackQueryHandler)
 
-from auth import get_all_products, get_access_token, get_product
+from auth import get_all_products, get_access_token, get_product, get_inventory, get_product_image_url, \
+    get_product_unit, get_product_price
 from error_processing import TelegramLogsHandler
 
 logger = logging.getLogger(__file__)
 
-START, BUTTONS_HANDLER, HANDLE_MENU,  = range(3)
+START, BUTTONS_HANDLER, HANDLE_MENU, HANDLE_DESCRIPTION = range(4)
 
 
 def start(update: Update, context: CallbackContext, token, redis_client) -> None:
@@ -47,20 +48,37 @@ def buttons_handler(
         redis_client) -> None:
 
     query = update.callback_query
-    product = get_product(token, query.data)['data']
-    pprint(get_product(token, query.data))
+    product = get_product(token, query.data)
+
+    inventory = get_inventory(token, query.data)['data']
+
+    image_url = get_product_image_url(token, product)
+    unit = get_product_unit(product)
+    price = get_product_price(product)
 
     message = dedent(f'''\
-            {product["attributes"]["name"]} Kg.
-            {product["meta"]["display_price"]["with_tax"]["formatted"]}
-            {product["attributes"]["description"]}'''
+            {product.get('data').get('attributes').get('name')}
+            
+            {price} per {unit}
+            
+            {inventory['available']} {unit} on stock
+            
+            {product['data']["attributes"]["description"]}'''
     )
 
-    context.bot.sendMessage(chat_id=update.callback_query.message.chat.id, text=message)
+    keyboard = []
+    keyboard.append([InlineKeyboardButton('Взад', callback_data=token)])
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    context.bot.sendPhoto(chat_id=update.callback_query.message.chat.id, photo=image_url, caption=message, reply_markup=reply_markup)
+    context.bot.delete_message(chat_id=update.callback_query.message.chat.id, message_id=update.callback_query.message.message_id)
+
+
+    #context.bot.sendMessage(chat_id=update.callback_query.message.chat.id, text=message)
     #update.message.reply_text(message)
 
     #print(query)
-    return START
+    return HANDLE_MENU
 
 
 def cancel(bot, update):
