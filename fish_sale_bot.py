@@ -81,6 +81,24 @@ def buttons_handler(
     return HANDLE_MENU
 
 
+def menu_handler(update: Update, context: CallbackContext, token, redis_client) -> None:
+
+    products = get_all_products(token)['data']
+    #print(products)
+    keyboard = []
+    for product in products:
+        keyboard.append([InlineKeyboardButton(product['attributes']['name'], callback_data=product['id'])])
+
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    context.bot.sendMessage(chat_id=update.callback_query.message.chat.id,
+                           text='Выберете рыбов!',
+                           reply_markup=reply_markup
+                           )
+
+    return BUTTONS_HANDLER
+
+
 def cancel(bot, update):
     user = update.message.from_user
     logger.info("Пользователь %s завершил покупку.", user.first_name)
@@ -128,6 +146,11 @@ def main() -> None:
         token=elastic_path_token,
         redis_client=redis_client
     )
+    partial_menu_handler = partial(
+        menu_handler,
+        token=elastic_path_token,
+        redis_client=redis_client
+    )
 
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', partial_start_handler)],
@@ -139,7 +162,7 @@ def main() -> None:
             ],
             HANDLE_MENU: [
                 CallbackQueryHandler(
-                    partial_buttons_handler,
+                    partial_menu_handler,
                 )
             ],
         },
